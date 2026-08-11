@@ -13,6 +13,12 @@ Usage example: nytcli -s world -l 10 -a your_nyt_api_key_here
 Go to [New York Times Developers](https://developer.nytimes.com/) to get your own API key
 (enable the **Top Stories API** for it).
 
+`-a` is optional if the key is available another way, checked in this order:
+
+1. `-a` flag
+2. `NYTCLI_API_KEY` environment variable
+3. `~/.config/nytcli/api_key` (or `$XDG_CONFIG_HOME/nytcli/api_key`), one line, `chmod 600`
+
 ### 2026-08 repair
 
 NYT retired the News API (`api.nytimes.com/svc/news/v3`) that this script

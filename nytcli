@@ -12,10 +12,22 @@ while getopts s:l:a: opts; do
     esac
 done
 
+KEYFILE="${XDG_CONFIG_HOME:-$HOME/.config}/nytcli/api_key"
+if [ -z "${API:-}" ]; then
+    API="${NYTCLI_API_KEY:-}"
+fi
+if [ -z "${API:-}" ] && [ -r "$KEYFILE" ]; then
+    API=$(<"$KEYFILE")
+fi
+
 if [ -z "${API:-}" ]; then
     echo "Usage: nytcli -a <nyt-api-key> [-s section] [-l limit]" >&2
     echo "Sections: arts, business, movies, politics, science, sports, technology, us, world, ... (see NYT docs)" >&2
     echo "Get a key at https://developer.nytimes.com/" >&2
+    echo >&2
+    echo "To skip -a every time, either:" >&2
+    echo "  export NYTCLI_API_KEY=your_key   (e.g. in ~/.bashrc)" >&2
+    echo "  or: mkdir -p $(dirname "$KEYFILE") && echo your_key > $KEYFILE && chmod 600 $KEYFILE" >&2
     exit 1
 fi
 
