@@ -45,7 +45,7 @@ echo "$RESP" | jq -r --argjson limit "$LIMIT" '
     .results
     | (if $limit > 0 then .[:$limit] else . end)
     | .[]
-    | .title, .abstract
+    | .title, .abstract, .url
 ' | awk '
 
 BEGIN {
@@ -55,13 +55,18 @@ BEGIN {
         RULER = RULER "-"
     # Variable with title color (yellow on black)
     TEXTCOL="\033[0;93m\033[40m"
+    # Variable dim color for the link
+    DIMCOL="\033[2m"
     # Variable to reset text color
     NC="\033[0m"
 }
 # Print title
-NR % 2 { print TEXTCOL $0 NC }
+NR % 3 == 1 { print TEXTCOL $0 NC }
 
-# Print abstract and horizontal ruler
-!(NR % 2) { print $0 "\n" RULER }
+# Print abstract
+NR % 3 == 2 { print $0 }
+
+# Print link and horizontal ruler
+NR % 3 == 0 { print DIMCOL $0 NC "\n" RULER }
 
 ' | fmt -s -w 78
