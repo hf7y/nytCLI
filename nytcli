@@ -1,4 +1,8 @@
-#!/bin/bash -k
+#!/bin/bash
+set -euo pipefail
+
+SECTION="home"
+LIMIT=0
 
 while getopts s:l:a: opts; do
     case ${opts} in
@@ -8,13 +12,29 @@ while getopts s:l:a: opts; do
     esac
 done
 
-URL="http://api.nytimes.com/svc/news/v3/content/all/${SECTION}/all.xml?limit=${LIMIT}&api-key=${API}"
+if [ -z "${API:-}" ]; then
+    echo "Usage: nytcli -a <nyt-api-key> [-s section] [-l limit]" >&2
+    echo "Sections: arts, business, movies, politics, science, sports, technology, us, world, ... (see NYT docs)" >&2
+    echo "Get a key at https://developer.nytimes.com/" >&2
+    exit 1
+fi
 
-wget $URL -qrO- | \
-xmlstarlet fo -t | \
-grep -P \<\(title\|abstract\)\> | \
-sed -r "s.</?[a-z]*>..g" | \
-awk '
+URL="https://api.nytimes.com/svc/topstories/v2/${SECTION}.json?api-key=${API}"
+
+RESP=$(curl -s "$URL") || { echo "nytcli: request failed" >&2; exit 1; }
+
+STATUS=$(echo "$RESP" | jq -r '.status // "error"')
+if [ "$STATUS" != "OK" ]; then
+    echo "nytcli: ${STATUS}: $(echo "$RESP" | jq -r '.fault.faultstring // .message // "unknown error"')" >&2
+    exit 1
+fi
+
+echo "$RESP" | jq -r --argjson limit "$LIMIT" '
+    .results
+    | (if $limit > 0 then .[:$limit] else . end)
+    | .[]
+    | .title, .abstract
+' | awk '
 
 BEGIN {
     # Create horizontal ruler
@@ -26,11 +46,10 @@ BEGIN {
     # Variable to reset text color
     NC="\033[0m"
 }
-# Strip leading whitespace, print title
-NR % 2 { gsub(/^[ \t]*/, ""); print TEXTCOL $0 NC }
+# Print title
+NR % 2 { print TEXTCOL $0 NC }
 
-# Strip leading whitespace, print abstract and horizontal ruler
-!(NR % 2) { gsub(/^[ \t]*/, ""); print $0 "\n" RULER }
+# Print abstract and horizontal ruler
+!(NR % 2) { print $0 "\n" RULER }
 
-# Format line to 78 characters
 ' | fmt -s -w 78

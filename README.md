@@ -3,11 +3,22 @@
 Read the latest stories from the New York Times directly in the terminal.
 
 ```
--s      Section, e.g. world, europe, business (defaults to all)
--l      Limit (number of new items)
+-s      Section, e.g. world, business, technology (defaults to home)
+-l      Limit (number of items, defaults to all returned)
 -a      Your NYTimes API key
 
-Usage example: nytcli -s world -l 10 -a you_nyt_api_key_here
+Usage example: nytcli -s world -l 10 -a your_nyt_api_key_here
 ```
 
-Go to [New York Times Developers](http://developers.nytimes.com/) to get your own API key.
+Go to [New York Times Developers](https://developer.nytimes.com/) to get your own API key
+(enable the **Top Stories API** for it).
+
+### 2026-08 repair
+
+NYT retired the News API (`api.nytimes.com/svc/news/v3`) that this script
+originally used, and `xmlstarlet` was a dependency for parsing its XML.
+The script now calls the **Top Stories API v2** (JSON) instead and parses
+the response with `jq`. Requires: `curl`, `jq`, `awk`, `fmt`.
+
+Section names come from the Top Stories API, not the old News API — see
+[the section list](https://developer.nytimes.com/docs/top-stories-product/1/overview).
